@@ -1,0 +1,8 @@
+[web]
+mercury.udaarv.com
+
+[db]
+set.udaarv.com
+
+[admin]
+prometheus.udaarv.com

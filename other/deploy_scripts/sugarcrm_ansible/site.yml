@@ -1,0 +1,54 @@
+- name: apply common configuration to all servers
+  hosts: all
+  remote_user: admin
+  sudo: yes
+  tasks:
+    - name: update OS packages
+      action: apt upgrade=dist update_cache=yes
+    - name: ensure basic packages are installed
+      action: apt name={{item}}
+      with_items:
+      - vim
+      - screen
+      - git-core
+      - build-essential
+      - python2.7-dev
+      - python3.2-dev
+      - python-setuptools
+    - name: install pip
+      action: easy_install name=pip
+
+- name: Install packages needed for LAMP stack
+  hosts: web
+  remote_user: admin
+  sudo: yes
+  tasks:
+    - name: ensure apt chache is up to date
+      action: apt update_cache=yes
+    - name: ensure web stack packages are installed
+      action: apt name={{item}}
+      with_items:
+      - php5-mysql
+      - libapache2-mod-php5
+      - mysql-server
+      - unzip
+      - php5-gd
+      - php5-curl
+      - libmysqlclient-dev
+    - name: Ensure mysql-python is installed
+      pip: name=MySQL-python
+- name: set up SugarCRM
+  hosts: web
+  remote_user: admin
+  sudo: yes
+  tasks:
+    - name: download surgarcrm CE
+      get_url: url=http://goo.gl/lzyQw2 dest=/tmp/sugar_latest.zip force=yes
+    - name: unzip sugarCRM
+      unarchive: src=/tmp/sugar_latest.zip dest=/var/www/ owner=www-data group=www-data copy=no creates=/var/www/SugarCE-Full-6.5.18/install.php
+    - name: Set up file permissions
+      file: path=/var/www/ mode=766 recurse=yes owner=www-data group=www-data
+    - name: create database
+      mysql_db: name=sugarcrmce state=present
+    - name: create user
+      mysql_user: name=sugarcrm password=mypass priv=*.*:ALL state=present
